@@ -7,7 +7,7 @@
 目前仅上传了dll。为方便试用，该dll除了Debug和Release，还包含Debug
 EXE配置，编译结果为exe。该程序在图片中显示识别的表格结构，并通过OutputDebugString输出识别的文字。注意Tesseract识别时间较长，另外需通过键盘按键关闭显示图片的窗口。
 
-欢迎同行提出改进建议。除了提交issue外，也可通过邮箱cqwxj\@hotmail.com和我交流。
+欢迎同行提出改进建议。除了提交issue外，也可通过邮箱31416@msn.cn和我交流。
 
 # dll开发环境
 
