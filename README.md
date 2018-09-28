@@ -9,7 +9,7 @@ EXE配置，编译结果为exe。该程序在图片中显示识别的表格结�
 
 欢迎同行提出改进建议。除了提交issue外，也可通过邮箱cqwxj\@hotmail.com和我交流。
 
-#dll开发环境
+# dll开发环境
 
 Windows 7 SP1 x64
 
