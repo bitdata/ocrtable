@@ -1,0 +1,12 @@
+EXPORTS
+	TOLoadImage
+	TOFree
+	TOGetTableCount
+	TOGetTable
+	TOGetRowCount
+	TOGetColumnCount
+	TOGetRowHeight
+	TOGetColumnWidth
+	TOGetCell
+	TODrawTable
+	TOOcr
