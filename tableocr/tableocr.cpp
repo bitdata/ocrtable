@@ -2,16 +2,10 @@
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
 #include <tchar.h>
+#define TABLEOCR_API extern "C"
+#include "tableocr.h"
 #include "table.hpp"
 #include "ocr.hpp"
-
-typedef struct _TOOPTION
-{
-	BOOL isMerged;
-	int minSize;
-	int threshold;
-	int delta;
-}TOOPTION;
 
 class TableOcr;
 
@@ -41,10 +35,10 @@ public:
 			{
 				Rect rect = pExtractor->rects[i];
 				TableEx* pTable = new TableEx(this, rect);
-				pTable->prepare(option.threshold, option.delta);
-				if (!option.isMerged)
+				pTable->prepare(option.minSize, option.threshold, option.delta);
+				if (option.isMerged)
 				{
-					pTable->AdjustLines(option.delta);
+					pTable->AdjustTable(option.delta);
 				}
 				tables.push_back(pTable);
 			}
@@ -76,30 +70,37 @@ TableEx::TableEx(TableOcr* pOwner, const Rect& rect)
 	this->rect = rect;
 }
 
-extern "C" void* WINAPI TOLoadImage(const char* pszImagePath, const TOOPTION* pOption)
+TABLEOCR_API void* WINAPI TOLoadImage(const char* pszImagePath, const TOOPTION* pOption, LPSIZE pSize)
 {
 	TableOcr* p = new TableOcr(pszImagePath, pOption);
 	if (p != NULL)
 	{
 		if (p->pExtractor != NULL)
+		{
+			if (pSize != NULL)
+			{
+				pSize->cx = p->pExtractor->gray.cols;
+				pSize->cy = p->pExtractor->gray.rows;
+			}
 			return (void*)p;
+		}
 		delete p;
 	}
 	return NULL;
 }
 
-extern "C" void WINAPI TOFree(void* hTO)
+TABLEOCR_API void WINAPI TOFree(void* hTO)
 {
 	delete (TableOcr*)hTO;
 }
 
-extern "C" int WINAPI TOGetTableCount(void* hTO)
+TABLEOCR_API int WINAPI TOGetTableCount(void* hTO)
 {
 	TableOcr* p = (TableOcr*)hTO;
 	return (int)p->tables.size();
 }
 
-extern "C" void* WINAPI TOGetTable(void* hTO, int index, LPRECT pRect)
+TABLEOCR_API void* WINAPI TOGetTable(void* hTO, int index, LPRECT pRect)
 {
 	TableOcr* p = (TableOcr*)hTO;
 	if (pRect != NULL)
@@ -113,36 +114,36 @@ extern "C" void* WINAPI TOGetTable(void* hTO, int index, LPRECT pRect)
 	return (void*)p->tables[index];
 }
 
-extern "C" int WINAPI TOGetRowCount(void* hTable)
+TABLEOCR_API int WINAPI TOGetRowCount(void* hTable)
 {
 	TableEx* p = (TableEx*)hTable;
 	return (int)p->getRowCount();
 }
 
-extern "C" int WINAPI TOGetColumnCount(void* hTable)
+TABLEOCR_API int WINAPI TOGetColumnCount(void* hTable)
 {
 	TableEx* p = (TableEx*)hTable;
 	return (int)p->getColumnCount();
 }
 
-extern "C" int WINAPI TOGetRowHeight(void* hTable, int iRow)
+TABLEOCR_API int WINAPI TOGetRowHeight(void* hTable, int iRow)
 {
 	TableEx* p = (TableEx*)hTable;
 	return (int)p->getRowHeight(iRow);
 }
 
-extern "C" int WINAPI TOGetColumnWidth(void* hTable, int iCol)
+TABLEOCR_API int WINAPI TOGetColumnWidth(void* hTable, int iCol)
 {
 	TableEx* p = (TableEx*)hTable;
 	return (int)p->getColumnWidth(iCol);
 }
 
-extern "C" BOOL WINAPI TOGetCell(void* hTable, int iRow, int iCol, LPRECT pRect)
+TABLEOCR_API BOOL WINAPI TOGetCell(void* hTable, int iRow, int iCol, LPRECT pRect)
 {
 	TableEx* p = (TableEx*)hTable;
 	Rect rect;
 	BOOL fRet;
-	if (p->pOwner->option.isMerged)
+	if (!p->pOwner->option.isMerged)
 	{
 		rect = p->toRect(iRow, iCol);
 		fRet = TRUE;
@@ -160,15 +161,16 @@ extern "C" BOOL WINAPI TOGetCell(void* hTable, int iRow, int iCol, LPRECT pRect)
 	return fRet;
 }
 
-extern "C" void WINAPI TODrawTable(void* hTable, const char* winname)
+TABLEOCR_API void WINAPI TODrawTable(void* hTable, const char* winname, int ratio)
 {
 	TableEx* p = (TableEx*)hTable;
 	Mat img = p->pOwner->pExtractor->gray(p->rect);
 	p->drawLines(img, Scalar(0), 5);
+	resize(img, img, Size(img.cols / ratio, img.rows / ratio));
 	imshow(winname, img);
 }
 
-extern "C" const char* WINAPI TOOcr(void* hTO, const RECT* pRect)
+TABLEOCR_API const char* WINAPI TOOcr(void* hTO, const RECT* pRect)
 {
 	Rect cell(pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
 	TableOcr* p = (TableOcr*)hTO;
@@ -219,18 +221,18 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	}
 
 	TOOPTION option;
-	option.isMerged = FALSE;
+	option.isMerged = TRUE;
 	option.minSize = 20;
-	option.threshold = 5;
+	option.threshold = 10;
 	option.delta = 3;
-	void* hTO = TOLoadImage(lpCmdLine, &option);
+	void* hTO = TOLoadImage(lpCmdLine, &option,NULL);
 	if (NULL == hTO)
 		return -1;
 	int nTables = TOGetTableCount(hTO);
 	for (int k = 0; k < nTables; k++)
 	{
 		void* hTable = TOGetTable(hTO, k, NULL);
-		TODrawTable(hTable, "lines");
+		TODrawTable(hTable, "lines", 2);
 		int nRows = TOGetRowCount(hTable);
 		int nCols = TOGetColumnCount(hTable);
 		for (int i = 0; i < nRows; i++)

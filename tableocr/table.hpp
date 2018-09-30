@@ -19,10 +19,10 @@ public:
 		this->vertical = vertical;
 	}
 
-	void prepare(int threshold, int delta)
+	void prepare(int minSize, int threshold, int delta)
 	{
 		calcLines(threshold);
-		mergeLines(delta);
+		mergeLines(minSize, delta);
 		removeIsolatedLines(delta);
 		calcMarks(delta);
 	}
@@ -61,57 +61,57 @@ public:
 		}
 	}
 
-	void mergeLines(int delta)
+	bool mergeLines(int minSize, int delta)
 	{
+		bool isMerged = false;
 		sort(hLines.begin(), hLines.end(), compareHorizontal);
 		for (size_t i = 0; i < hLines.size(); i++)
 		{
-			Vec4i& line1 = hLines[i];
 			for (size_t j = i + 1; j < hLines.size(); j++)
 			{
-				Vec4i& line2 = hLines[j];
-				if (line1[1] + delta < line2[1])
+				if (ypos(hLines[i]) + delta < ypos(hLines[j]))
 					break;
-				if (line2[0] > line1[2] && line2[0] < line1[2] + delta)
+				Vec4i& line1 = hLines[left(hLines[i]) <= left(hLines[j]) ? i : j];
+				Vec4i& line2 = hLines[left(hLines[i]) <= left(hLines[j]) ? j : i];
+				if (left(line2) > right(line1))
 				{
-					line2[1] = line2[3] = (line1[1] + line2[1]) / 2;
-					line2[0] = line1[0];
-					line1[2] = line1[0] = -1; //will be removed afterward
-				}
-				else if (line1[0] > line2[2] && line1[0] < line2[2] + delta)
-				{
-					line2[1] = line2[3] = (line1[1] + line2[1]) / 2;
-					line2[2] = line1[2];
-					line1[0] = line1[2] = -1; //will be removed afterward
+					if (left(line2) - right(line1) < delta ||
+						(left(line2) - right(line1) < minSize && right(line2) - left(line1) > horizontal.cols / 2))
+					{
+						line2[1] = line2[3] = (line1[1] + line2[1]) / 2;
+						line2[0] = line1[0];
+						line1[2] = line1[0] = -1; //will be removed afterward
+						isMerged = true;
+					}
 				}
 			}
 		}
 		sort(vLines.begin(), vLines.end(), compareVertical);
 		for (size_t i = 0; i < vLines.size(); i++)
 		{
-			Vec4i& line1 = vLines[i];
 			for (size_t j = i + 1; j < vLines.size(); j++)
 			{
-				Vec4i& line2 = vLines[j];
-				if (line1[0] + delta < line2[0])
+				if (xpos(vLines[i]) + delta < xpos(vLines[j]))
 					break;
-				if (line2[1] > line1[3] && line2[1] < line1[3] + delta)
+				Vec4i& line1 = vLines[top(vLines[i]) <= top(vLines[j]) ? i : j];
+				Vec4i& line2 = vLines[top(vLines[i]) <= top(vLines[j]) ? j : i];
+				if (top(line2) > bottom(line1))
 				{
-					line2[0] = line2[2] = (line1[0] + line2[0]) / 2;
-					line2[1] = line1[1];
-					line1[3] = line1[1] = -1; //will be removed afterward
-				}
-				else if (line1[1] > line2[3] && line1[1] < line2[3] + delta)
-				{
-					line2[0] = line2[2] = (line1[0] + line2[0]) / 2;
-					line2[3] = line1[3];
-					line1[1] = line1[3] = -1; //will be removed afterward
+					if (top(line2) - bottom(line1) < delta ||
+						(top(line2) - bottom(line1) < minSize && bottom(line2) - top(line1) > horizontal.rows / 2))
+					{
+						line2[0] = line2[2] = (line1[0] + line2[0]) / 2;
+						line2[1] = line1[1];
+						line1[3] = line1[1] = -1; //will be removed afterward
+						isMerged = true;
+					}
 				}
 			}
 		}
+		return isMerged;
 	}
 
-	void removeIsolatedLines(int delta)
+	bool removeIsolatedLines(int delta)
 	{
 		std::set<int> hSet, vSet;
 		std::queue<int> hQueue, vQueue;
@@ -165,8 +165,10 @@ public:
 				}
 			}
 		}
+		bool isRemoved = (hLines.size() != hSet.size() || vLines.size() != vSet.size());
 		update(hLines, hSet);
 		update(vLines, vSet);
+		return isRemoved;
 	}
 
 	void calcMarks(int delta)
@@ -199,104 +201,260 @@ public:
 	{
 		return xMarks[col + 1] - xMarks[col];
 	}
-	// 针对规则的表格
+	// should be called when isMerged = false
 	Rect toRect(int row, int col) const
 	{
 		return Rect(xMarks[col], yMarks[row], xMarks[col + 1] - xMarks[col], yMarks[row + 1] - yMarks[row]);
 	}
 
-	void AdjustLines(int delta)
+	// should be called when isMerged = true
+	void AdjustTable(int delta)
+	{
+		AdjustPosition();
+
+		AdjustLength(delta, TRUE, FALSE);
+		AdjustLength(delta, FALSE, TRUE);
+
+		calcMarks(delta);
+		AdjustByCells();
+	}
+	void AdjustPosition()
 	{
 		for (size_t i = 0; i < hLines.size(); i++)
 		{
 			Vec4i& hLine = hLines[i];
-			for (size_t j = 0; j < yMarks.size(); j++)
-			{
-				int y = yMarks[j];
-				if (hLine[1] >= y - delta && hLine[3] <= y + delta)
-				{
-					hLine[1] = y;
-					hLine[3] = y;
-				}
-			}
-			for (size_t j = 1; j < xMarks.size(); j++)
-			{
-				if (hLine[0] <= xMarks[j])
-				{
-					if (hLine[0] < (xMarks[j - 1] + xMarks[j]) / 2)
-					{
-						hLine[0] = xMarks[j - 1];
-					}
-					else
-					{
-						hLine[0] = xMarks[j];
-					}
-					break;
-				}
-			}
-			for (size_t j = xMarks.size() - 2; j >= 0; j--)
-			{
-				if (hLine[2] >= xMarks[j])
-				{
-					if (hLine[2] > (xMarks[j] + xMarks[j + 1]) / 2)
-					{
-						hLine[2] = xMarks[j + 1];
-					}
-					else
-					{
-						hLine[2] = xMarks[j];
-					}
-					break;
-				}
-			}
-		}
-		for (size_t i = 0; i < vLines.size(); i++)
-		{
-			Vec4i& vLine = vLines[i];
-			for (size_t j = 0; j < xMarks.size(); j++)
-			{
-				int y = xMarks[j];
-				if (vLine[0] >= y - delta && vLine[2] <= y + delta)
-				{
-					vLine[0] = y;
-					vLine[2] = y;
-				}
-			}
 			for (size_t j = 1; j < yMarks.size(); j++)
 			{
-				if (vLine[1] <= yMarks[j])
+				if (yMarks[j] >= hLine[1])
 				{
-					if (vLine[1] < (yMarks[j - 1] + yMarks[j]) / 2)
+					if (hLine[1] > (yMarks[j - 1] + yMarks[j]) / 2)
 					{
-						vLine[1] = yMarks[j - 1];
+						hLine[1] = hLine[3] = yMarks[j];
 					}
 					else
 					{
-						vLine[1] = yMarks[j];
-					}
-					break;
-				}
-			}
-			for (size_t j = yMarks.size() - 2; j >= 0; j--)
-			{
-				if (vLine[3] >= yMarks[j])
-				{
-					if (vLine[3] > (yMarks[j] + yMarks[j + 1]) / 2)
-					{
-						vLine[3] = yMarks[j + 1];
-					}
-					else
-					{
-						vLine[3] = yMarks[j];
+						hLine[1] = hLine[3] = yMarks[j - 1];
 					}
 					break;
 				}
 			}
 		}
+		for (size_t j = 0; j < vLines.size(); j++)
+		{
+			Vec4i& vLine = vLines[j];
+			for (size_t i = 1; i < xMarks.size(); i++)
+			{
+				if (xMarks[i] >= vLine[0])
+				{
+					if (vLine[0] > (xMarks[i - 1] + xMarks[i]) / 2)
+					{
+						vLine[0] = vLine[2] = xMarks[i];
+					}
+					else
+					{
+						vLine[0] = vLine[2] = xMarks[i - 1];
+					}
+					break;
+				}
+			}
+		}
+	}
+	void AdjustLength(int delta, BOOL increase, BOOL decrease)
+	{
 		sort(hLines.begin(), hLines.end(), compareHorizontal);
 		sort(vLines.begin(), vLines.end(), compareVertical);
+
+		for (size_t i = 0; i < hLines.size(); i++)
+		{
+			Vec4i& hLine = hLines[i];
+			int x = hLine[0];
+			for (size_t j = 0; j < vLines.size(); j++)
+			{
+				Vec4i& vLine = vLines[j];
+				if (isCrossed(hLine, vLine, delta))
+				{
+					x = xpos(vLine);
+					continue;
+				}
+				if (xpos(vLine) > right(hLine) && top(vLine) <= ypos(hLine) && bottom(vLine) >= ypos(hLine))
+				{
+					if (increase)
+					{
+						if (right(hLine) > (x + xpos(vLine)) / 2)
+						{
+							hLine[2] = xpos(vLine);
+						}
+					}
+					if (decrease)
+					{
+						if (right(hLine) <= (x + xpos(vLine)) / 2)
+						{
+							hLine[2] = x;
+						}
+					}
+					break;
+				}
+			}
+			x = right(hLine);
+			for (int j = (int)vLines.size() - 1; j >= 0; j--)
+			{
+				Vec4i& vLine = vLines[j];
+				if (isCrossed(hLine, vLine, delta))
+				{
+					x = xpos(vLine);
+					continue;
+				}
+				if (xpos(vLine) < left(hLine) && top(vLine) <= ypos(hLine) && bottom(vLine) >= ypos(hLine))
+				{
+					if (increase)
+					{
+						if (left(hLine) < (x + xpos(vLine)) / 2)
+						{
+							hLine[0] = xpos(vLine);
+						}
+					}
+					if (decrease)
+					{
+						if (left(hLine) >= (x + xpos(vLine)) / 2)
+						{
+							hLine[0] = x;
+						}
+					}
+					break;
+				}
+			}
+		}
+		for (size_t j = 0; j < vLines.size(); j++)
+		{
+			Vec4i& vLine = vLines[j];
+			int y = top(vLine);
+			for (size_t i = 0; i < hLines.size(); i++)
+			{
+				Vec4i& hLine = hLines[i];
+				if (isCrossed(hLine, vLine, delta))
+				{
+					y = ypos(hLine);
+					continue;
+				}
+				if (ypos(hLine) > bottom(vLine) && left(hLine) <= xpos(vLine) && right(hLine) >= xpos(vLine))
+				{
+					if (increase)
+					{
+						if (bottom(vLine) > (y + ypos(hLine)) / 2)
+						{
+							vLine[3] = ypos(hLine);
+						}
+					}
+					if (decrease)
+					{
+						if (bottom(vLine) <= (y + ypos(hLine)) / 2)
+						{
+							vLine[3] = y;
+						}
+					}
+					break;
+				}
+			}
+			y = bottom(vLine);
+			for (int i = (int)hLines.size() - 1; i >= 0; i--)
+			{
+				Vec4i& hLine = hLines[i];
+				if (isCrossed(hLine, vLine, delta))
+				{
+					y = ypos(hLine);
+					continue;
+				}
+				if (ypos(hLine) < top(vLine) && left(hLine) <= xpos(vLine) && right(hLine) >= xpos(vLine))
+				{
+					if (increase)
+					{
+						if (top(vLine) < (y + ypos(hLine)) / 2)
+						{
+							vLine[1] = ypos(hLine);
+						}
+					}
+					if (decrease)
+					{
+						if (top(vLine) >= (y + ypos(hLine)) / 2)
+						{
+							vLine[1] = y;
+						}
+					}
+					break;
+				}
+			}
+		}
 	}
-	// 针对不规则的表格
+	bool AdjustByCells()
+	{
+		bool isDirty = false;
+		for (int i = 0; i < (int)getRowCount(); i++)
+		{
+			for (int j = 0; j < (int)getColumnCount(); j++)
+			{
+				Rect rect;
+				getRect(i, j, rect);
+				int x1 = rect.x;
+				int x2 = rect.x + rect.width;
+				int y1 = rect.y;
+				int y2 = rect.y + rect.height;
+				if (y1<yMarks[i] || y2 >yMarks[i + 1])
+				{
+					for (size_t k = 0; k < hLines.size(); k++)
+					{
+						Vec4i& hLine = hLines[k];
+						if (ypos(hLine) > y1 && ypos(hLine) < y2)
+						{
+							if (left(hLine) < x2 && right(hLine) > x1)
+							{
+								isDirty = true;
+								if (left(hLine) < x1)
+								{
+									hLine[2] = x1;
+								}
+								else if (right(hLine) > x2)
+								{
+									hLine[0] = x2;
+								}
+								else
+								{
+									hLine[0] = hLine[2] = -1;
+								}
+							}
+						}
+					}
+				}
+				if (x1<xMarks[j] || x2>xMarks[j + 1])
+				{
+					for (size_t k = 0; k < vLines.size(); k++)
+					{
+						Vec4i& vLine = vLines[k];
+						if (xpos(vLine) > x1 && xpos(vLine) < x2)
+						{
+							if (top(vLine) < y2 && bottom(vLine) > y1)
+							{
+								isDirty = true;
+								if (top(vLine) < y1)
+								{
+									vLine[3] = y1;
+								}
+								else if (bottom(vLine) > y2)
+								{
+									vLine[1] = y2;
+								}
+								else
+								{
+									vLine[1] = vLine[3] = -1;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return isDirty;
+	}
+	// should be called when isMerged = true
 	bool getRect(int row, int col, Rect& rect) const
 	{
 		int x1 = xMarks[col];
@@ -306,40 +464,58 @@ public:
 		for (int i = (int)vLines.size() - ((int)getColumnCount() - col); i >= 0; i--)
 		{
 			const Vec4i& vLine = vLines[i];
-			if (vLine[0] <= x1 && vLine[1] <= y1 && vLine[3] >= y2)
+			if (xpos(vLine) <= x1 && top(vLine) <= y1 && bottom(vLine) >= y2)
 			{
-				rect.x = vLine[0];
+				rect.x = xpos(vLine);
 				break;
 			}
 		}
 		for (int i = col; i < (int)vLines.size(); i++)
 		{
 			const Vec4i& vLine = vLines[i];
-			if (vLine[0] >= x2 && vLine[1] <= y1 && vLine[3] >= y2)
+			if (xpos(vLine) >= x2 && top(vLine) <= y1 && bottom(vLine) >= y2)
 			{
-				rect.width = vLine[0] - rect.x;
+				rect.width = xpos(vLine) - rect.x;
 				break;
 			}
 		}
 		for (int i = (int)hLines.size() - ((int)getRowCount() - row); i >= 0; i--)
 		{
 			const Vec4i& hLine = hLines[i];
-			if (hLine[1] <= y1 && hLine[0] <= x1 && hLine[2] >= x2)
+			if (ypos(hLine) <= y1 && left(hLine) <= x1 && right(hLine) >= x2)
 			{
-				rect.y = hLine[1];
+				rect.y = ypos(hLine);
 				break;
 			}
 		}
 		for (int i = row; i < (int)hLines.size(); i++)
 		{
 			const Vec4i& hLine = hLines[i];
-			if (hLine[1] >= y2 && hLine[0] <= x1 && hLine[2] >= x2)
+			if (ypos(hLine) >= y2 && left(hLine) <= x1 && right(hLine) >= x2)
 			{
-				rect.height = hLine[1] - rect.y;
+				rect.height = ypos(hLine) - rect.y;
 				break;
 			}
 		}
 		return (rect.x == x1 && rect.y == y1);
+	}
+	int getEndRow(const Rect& rect, int row) const
+	{
+		for (int i = row + 1; i < yMarks.size(); i++)
+		{
+			if (yMarks[i] >= rect.y + rect.height)
+				return i - 1;
+		}
+		return -1;
+	}
+	int getEndColumn(const Rect& rect, int col) const
+	{
+		for (int j = col + 1; j < xMarks.size(); j++)
+		{
+			if (xMarks[j] >= rect.x + rect.width)
+				return j - 1;
+		}
+		return -1;
 	}
 
 	void drawLines(Mat& img, const Scalar& color, int thickness)
@@ -390,17 +566,17 @@ private:
 		sort(v.begin(), v.end());
 		for (size_t i = 1; i < v.size(); i++)
 		{
-			if (v[i] - v[i - 1] < delta)
+			if (v[i] - v[i - 1] <= delta)
 			{
 				v[i] = (v[i] + v[i - 1]) / 2;
-				v[i - 1] = 0;
+				v[i - 1] = -1;
 			}
 		}
 		std::vector<int> temp;
 		temp.swap(v);
 		for (size_t i = 0; i < temp.size(); i++)
 		{
-			if (temp[i] != 0)
+			if (temp[i] >= 0)
 			{
 				v.push_back(temp[i]);
 			}
@@ -422,6 +598,31 @@ private:
 		if (a[0] == b[0] && a[1] < b[1])
 			return true;
 		return false;
+	}
+
+	static int left(const Vec4i& hLine)
+	{
+		return hLine[0];
+	}
+	static int right(const Vec4i& hLine)
+	{
+		return hLine[2];
+	}
+	static int ypos(const Vec4i& hLine)
+	{
+		return hLine[1];
+	}
+	static int top(const Vec4i& vLine)
+	{
+		return vLine[1];
+	}
+	static int bottom(const Vec4i& vLine)
+	{
+		return vLine[3];
+	}
+	static int xpos(const Vec4i& vLine)
+	{
+		return vLine[0];
 	}
 };
 
