@@ -1,4 +1,4 @@
-# ocrtable
+﻿# ocrtable
 
 对于包含表格的图片，很多OCR软件识别文字时，只是单纯提取整页文字，丢弃的表格的结构。这给使用者带来不便。本工具在OCR时能够保留表格的结构。结果保存为Word文档。
 
@@ -27,3 +27,13 @@ Windows 7 SP1 x64
 Visual Studio Community 2017
 
 DocX（Xceed.Words.NET.dll）（nuget下载）
+
+# 识别效果示例
+
+原图：
+
+![](jpgs/3.jpeg)
+
+识别结果：
+
+![](results/3.png)
