@@ -32,7 +32,7 @@ DocX（Xceed.Words.NET.dll）（nuget下载）
 
 原图：
 
-![](jpgs/3.jpeg =50x50)
+![](jpgs/3.jpeg){:height="100" width="100"}
 
 识别结果：
 
