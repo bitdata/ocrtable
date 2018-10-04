@@ -31,8 +31,7 @@ DocX（Xceed.Words.NET.dll）（nuget下载）
 # 识别效果示例
 
 原图：
-<div align=center><img width="565" height="600" src="jpgs/3.jpeg"/></div>
+<div align=center><img width="50%" src="jpgs/3.jpeg"/></div>
 
 识别结果：
-
-<div align=center>![](results/3.png)</div>
+<div align=center><img src="results/3.png"/></div>
