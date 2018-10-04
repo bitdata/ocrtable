@@ -31,7 +31,7 @@ DocX（Xceed.Words.NET.dll）（nuget下载）
 # 识别效果示例
 
 原图：
-
+<img align="right" src="jpgs/3.jpeg" style="zoom:50%" />
 ![](jpgs/3.jpeg){:height="50" width="50"}
 
 识别结果：
