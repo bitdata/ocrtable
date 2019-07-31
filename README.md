@@ -28,6 +28,8 @@ Visual Studio Community 2017
 
 DocX（Xceed.Words.NET.dll）（nuget下载）
 
+[下载预编译组件](https://pan.baidu.com/s/1zu0uDDy2vJFG_QKRPRbpxQ)
+
 # 识别效果示例
 
 原图：
