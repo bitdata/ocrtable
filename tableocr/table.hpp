@@ -677,10 +677,14 @@ public:
 			// if the number is not more than 6 then most likely it not a table
 			if (joints_contours.size() < 6)
 				continue;
-			boundRect[i].x -= delta;
-			boundRect[i].y -= delta;
-			boundRect[i].width += delta * 2;
-			boundRect[i].height += delta * 2;
+			if (boundRect[i].x - delta >= 0 && boundRect[i].y - delta >= 0 &&
+				boundRect[i].x + boundRect[i].width + delta <= bw.cols && boundRect[i].y + boundRect[i].height + delta <= bw.rows)
+			{
+				boundRect[i].x -= delta;
+				boundRect[i].y -= delta;
+				boundRect[i].width += delta * 2;
+				boundRect[i].height += delta * 2;
+			}
 			rects.push_back(boundRect[i]);
 		}
 	}

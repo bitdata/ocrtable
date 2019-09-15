@@ -21,7 +21,8 @@ public:
 class TableOcr
 {
 public:
-	TableOcr(const char* pszImagePath, const TOOPTION* pOption)
+	TableOcr(const char* pszImagePath, const char* pszLanguage, const TOOPTION* pOption)
+		:ocr(pszLanguage)
 	{
 		pExtractor = NULL;
 		option = *pOption;
@@ -70,9 +71,9 @@ TableEx::TableEx(TableOcr* pOwner, const Rect& rect)
 	this->rect = rect;
 }
 
-TABLEOCR_API void* WINAPI TOLoadImage(const char* pszImagePath, const TOOPTION* pOption, LPSIZE pSize)
+TABLEOCR_API void* WINAPI TOLoadImage(const char* pszImagePath, const char* pszLanguage, const TOOPTION* pOption, LPSIZE pSize)
 {
-	TableOcr* p = new TableOcr(pszImagePath, pOption);
+	TableOcr* p = new TableOcr(pszImagePath, pszLanguage, pOption);
 	if (p != NULL)
 	{
 		if (p->pExtractor != NULL)
@@ -210,9 +211,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	TCHAR szFile[MAX_PATH];
 	if (!*lpCmdLine)
 	{
-		*szFile = 0;
+		*szFile = 0; 
 		OPENFILENAME ofn = { sizeof(OPENFILENAME) };
-		ofn.lpstrFile = szFile;
+		ofn.lpstrFile = szFile; 
 		ofn.nMaxFile = MAX_PATH;
 		ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NONETWORKBUTTON;
 		if (!GetOpenFileName(&ofn))
@@ -225,7 +226,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	option.minSize = 20;
 	option.threshold = 10;
 	option.delta = 3;
-	void* hTO = TOLoadImage(lpCmdLine, &option,NULL);
+	void* hTO = TOLoadImage(lpCmdLine, "chi_sim", &option,NULL);
 	if (NULL == hTO)
 		return -1;
 	int nTables = TOGetTableCount(hTO);

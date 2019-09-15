@@ -1,15 +1,44 @@
-﻿# ocrtable
+# OCR Table
 
-对于包含表格的图片，很多OCR软件识别文字时，只是单纯提取整页文字，丢弃的表格的结构。这给使用者带来不便。本工具在OCR时能够保留表格的结构。结果保存为Word文档。
+[中文文档](README_CN.md)
 
-本工具由一个dll和一个exe组成，均为64位。Dll对应的子目录为tableocr，由VC开发，实现核心功能，包括表格格式识别和文字识别；exe对应的子目录为ocrtable，由C\#开发，实现用户界面和内容输出。jpgs目录下面是示例图片。
+## Introduction
 
-为方便试用，该dll除了Debug和Release，还包含Debug
-EXE配置，编译结果为exe。该程序在图片中显示识别的表格结构，并通过OutputDebugString输出识别的文字。注意Tesseract识别时间较长，另外需通过键盘按键关闭显示图片的窗口。
+For scanning copies containing tables or forms, many OCR softwares recognize text in entire page as whole by discarding all tables. Sometimes it is inconvenient for users. This project retains table structures as well and save the recognizing result as a Microsoft Word document.
 
-如果觉得对您有用，麻烦点个赞。也欢迎提出改进建议和参与改进。除了提交issue外，也可通过邮箱31416\@msn.cn和我交流。
+This project consists of a DLL and an EXE, both of which are 64-bit. The subdirectory corresponding to DLL is tableocr, developed by Visual C++. It implements core functions, including table structure recognition and text recognition. the subdirectory corresponding to EXE is ocrtable, developed by C\#, which provides user interface. Below the pictures directory are sample scanning copies.
 
-# dll开发环境
+Suggestions are welcome. In addition to submitting an issue, you can email me as well. My email address is 31416\@msn.cn.
+
+## Recognition Performance
+
+[Download pre-compiled components](https://pan.baidu.com/s/1sr3HyL6QDFvMTEG5GmCr-w)
+
+### English Character Recognition Example
+
+Please do not select "Recognize simplified Chinese characters".
+
+Scanning copy:
+<div align=center><img width="50%" src="pictures/1.png"/></div>
+
+Result (Note that tables are not displayed in order)：
+<div align=center><img src="results/1.png"/></div>
+
+### Chinese Character Recognition Example
+
+You need select "Recognize simplified Chinese characters".
+
+Scanning copy：
+<div align=center><img width="50%" src="pictures/3.jpeg"/></div>
+
+Result:
+<div align=center><img src="results/3.png"/></div>
+
+Chinese character recognition relies on Tesseract official pre-training package, which supports only a few fonts. Users can consider training Tesseract mannually or using other OCR technologies instead.
+
+## Development Environment
+
+### DLL Development environment
 
 Windows 7 SP1 x64
 
@@ -18,22 +47,28 @@ Visual Studio Community 2017
 OpenCV 3.4.3
 
 Tesseract 4.0.0-beta.4
-（git源代码编译，如何编译以及如何设置中文识别请搜索网上帖子）
+（Compiled by Git source.  Please search online resources to learn how to setup Chinese character recognition.）
 
-# exe开发环境
+For the convenience of debugging, the DLL module includes Debug EXE configuration, which outputs EXE. The program displays table structures and outputs recognized text by OutputDebugString Windows API. Note that recognition process may take long time, and the popup window needs to be closed by keyboard instead of mouse.
+
+### EXE Development environment
 
 Windows 7 SP1 x64
 
 Visual Studio Community 2017
 
-DocX（Xceed.Words.NET.dll）（nuget下载）
+DocX（Xceed.Words.NET.dll）（downloaded by nuget）
 
-[下载预编译组件](https://pan.baidu.com/s/1zu0uDDy2vJFG_QKRPRbpxQ)
+## Revision History
 
-# 识别效果示例
+### 2018-09-30
 
-原图：
-<div align=center><img width="50%" src="jpgs/3.jpeg"/></div>
+1. Complete the first edition.
 
-识别结果：
-<div align=center><img src="results/3.png"/></div>
+### 2019-09-14
+
+1. Fix bugs in DLL.
+
+2. Add international support in EXE.
+
+3. Update this document.

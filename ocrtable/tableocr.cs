@@ -83,14 +83,14 @@ class HTO : IDisposable
         public int cy;
     }
 
-    public HTO(string imagePath, bool isMerged, int minSize, int threshold = 5, int delta = 3)
+    public HTO(string imagePath, string language, bool isMerged, int minSize, int threshold = 5, int delta = 3)
     {
         var option = new TOOPTION();
         option.isMerged = (isMerged ? 1 : 0);
         option.minSize = minSize;
         option.threshold = threshold;
         option.delta = delta;
-        hTO = TOLoadImage(imagePath, option, out size);
+        hTO = TOLoadImage(imagePath, language, option, out size);
     }
 
     public void Dispose()
@@ -165,7 +165,7 @@ class HTO : IDisposable
     private SIZE size;
 
     [DllImport("tableocr.dll", CharSet = CharSet.Ansi)]
-    static extern IntPtr TOLoadImage(string imagePath, TOOPTION option, out SIZE size);
+    static extern IntPtr TOLoadImage(string imagePath, string language, TOOPTION option, out SIZE size);
 
     [DllImport("tableocr.dll")]
     static extern void TOFree(IntPtr hTO);

@@ -12,7 +12,12 @@ public:
 	Ocr()
 	{
 		s = NULL;
-		api.Init(NULL, "chi_sim");
+		api.Init(NULL, NULL);
+	}
+	explicit Ocr(const char* language)
+	{
+		s = NULL;
+		api.Init(NULL, language);
 	}
 	~Ocr()
 	{

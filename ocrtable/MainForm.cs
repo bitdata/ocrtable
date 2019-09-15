@@ -63,7 +63,8 @@ namespace ocrtable
         {
             try
             {
-                using (var hto = new HTO(imgTextBox.Text, isMergedCheckBox.Checked, (int)upDown.Value))
+                using (var hto = new HTO(imgTextBox.Text, chineseCheckBox.Checked?"chi_sim":"eng",
+                    isMergedCheckBox.Checked, (int)upDown.Value))
                 {
                     using (var doc = DocX.Create(docTextBox.Text))
                     {
@@ -71,6 +72,10 @@ namespace ocrtable
                         if (allOcrCheckBox.Checked)
                         {
                             text = hto.OcrParagraph(0);
+                            if(chineseCheckBox.Checked)
+                            {
+                                text = text.Replace(" ", "");
+                            }
                             if (!String.IsNullOrEmpty(text))
                             {
                                 doc.InsertParagraph().Append(text);
@@ -94,6 +99,10 @@ namespace ocrtable
                                     if (htable.GetCell(i, j, out rect))
                                     {
                                         text = hto.Ocr(rect);
+                                        if (chineseCheckBox.Checked)
+                                        {
+                                            text = text.Replace(" ", "");
+                                        }
                                         if (!multilineCheckBox.Checked)
                                         {
                                             text = text.Replace("\r", "").Replace("\n", "");
