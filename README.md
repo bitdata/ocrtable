@@ -29,10 +29,10 @@ Result (Note that tables are not displayed in order)：
 You need select "Recognize simplified Chinese characters".
 
 Scanning copy：
-<div align=center><img width="50%" src="pictures/3.jpeg"/></div>
+<div align=center><img width="50%" src="https://github/bitdata/orctable/pictures/3.jpeg"/></div>
 
 Result:
-<div align=center><img src="results/3.png"/></div>
+<div align=center><img src="https://github/bitdata/orctable/results/3.png"/></div>
 
 Chinese character recognition relies on Tesseract official pre-training package, which supports only a few fonts. Users can consider training Tesseract mannually or using other OCR technologies instead.
 
