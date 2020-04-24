@@ -12,7 +12,7 @@ Suggestions are welcome. In addition to submitting an issue, you can email me as
 
 ## Recognition Performance
 
-[Download pre-compiled components](https://pan.baidu.com/s/1sr3HyL6QDFvMTEG5GmCr-w)
+[Download pre-compiled components](https://pan.baidu.com/s/1xblrfjEW1A8xHrNNUCeyAQ code:jukw)
 
 ### English Character Recognition Example
 
