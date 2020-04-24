@@ -10,7 +10,7 @@
 
 ## 识别效果
 
-[下载预编译组件](https://pan.baidu.com/s/1sr3HyL6QDFvMTEG5GmCr-w)
+[下载预编译组件](https://pan.baidu.com/s/1DOST4gu8Gr87McebLEpfgQ 提取码：56j9)
 
 ### 英文识别
 
