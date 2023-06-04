@@ -59,6 +59,12 @@ Visual Studio Community 2017
 
 DocX（Xceed.Words.NET.dll）（downloaded by nuget）
 
+### Postscript
+
+This project was developed during a gap period when I changed jobs five years ago. At that time, I had ample time and learned some knowledge about machine learning and deep learning. Inspired by Jianlin Su's blog (http://spaces.ac.cn/archives/3856/) , I developed this small tool based on OpenCV. As a personal project of a aged programmer, I am very pleased that it has been recognized by many people, although I do not know how they use this tool.
+
+Initially, I considered improving the tool, including recognizing discontinuous or inclined lines from wrinkled paper, and improving the efficiency of text recognition. However, these problems are difficult for me. Later, I changed jobs severaltimes, none of which is related to AI. It was difficult to have enough time for related research after hard working(996). Therefore, the project was abandoned, and I estimate that the code will not be updated in the future. I am sorry for everybody. I wish you can find other improvements online.
+
 ## Revision History
 
 ### 2018-09-30
@@ -72,3 +78,7 @@ DocX（Xceed.Words.NET.dll）（downloaded by nuget）
 2. Add international support in EXE.
 
 3. Update this document.
+
+### 2023-06-04
+
+1. Add postscript.
